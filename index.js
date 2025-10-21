@@ -14,7 +14,7 @@ dotenv.config();
 const installationPath = process.env.XMTP_INSTALLATION_PATH || './.xmtp-installation';
 if (!fs.existsSync(installationPath)) {
   fs.mkdirSync(installationPath, { recursive: true });
-  console.log(`📁 Created XMTP installation directory: ${installationPath}`);
+  console.log(`ðŸ“ Created XMTP installation directory: ${installationPath}`);
 } else {
   // Clean old installations to prevent "2 installations" warning
   try {
@@ -22,10 +22,10 @@ if (!fs.existsSync(installationPath)) {
     const oldInstalls = files.filter(f => f.startsWith('installation-') && f !== 'installation-current');
     oldInstalls.forEach(f => {
       fs.rmSync(path.join(installationPath, f), { recursive: true, force: true });
-      console.log(`🗑️ Removed old installation: ${f}`);
+      console.log(`ðŸ—‘ï¸ Removed old installation: ${f}`);
     });
   } catch (e) {
-    console.log(`⚠️ Could not clean old installations: ${e.message}`);
+    console.log(`âš ï¸ Could not clean old installations: ${e.message}`);
   }
 }
 
@@ -39,15 +39,15 @@ const agent = await Agent.createFromEnv({
   env: process.env.XMTP_ENV || 'production',
   persistConversations: true,
   installationPath: installationPath,
-  // Add SQLCipher encryption key
-  dbEncryptionKey: process.env.XMTP_DB_ENCRYPTION_KEY || 'default-key-change-in-production'
+  // Add SQLCipher encryption key (must be 32+ characters)
+  dbEncryptionKey: process.env.XMTP_DB_ENCRYPTION_KEY || 'dragman-quest-vault-2025-secure-key-32-chars'
 });
 
 // --- Base App Quick Actions Implementation ---
 const ContentTypeActions = { authorityId: 'coinbase.com', typeId: 'actions', version: '1.0' };
 const ContentTypeIntent = { authorityId: 'coinbase.com', typeId: 'intent', version: '1.0' };
 
-// Register codec for Base App content types with validation
+// JsonCodec class for Base App content types
 class JsonCodec {
   constructor(contentType) {
     this._contentType = contentType;
@@ -112,9 +112,9 @@ function log(level, message, data = {}) {
   console.log(`[${timestamp}] [${level.toUpperCase()}]: ${message}`, data);
 }
 
-log('info', '🎯 Dragman Quest Vault Agent started successfully!');
-log('info', '📱 Ready to create crypto quests in Base App');
-log('info', '🚀 Quest Vault features enabled');
+log('info', 'ðŸŽ¯ Dragman Quest Vault Agent started successfully!');
+log('info', 'ðŸ“± Ready to create crypto quests in Base App');
+log('info', 'ðŸš€ Quest Vault features enabled');
 
 // ==================== QUEST VAULT SYSTEM ====================
 
@@ -338,25 +338,25 @@ const QUEST_TYPES = {
   defi_stake: {
     name: "DeFi Stake Quest",
     description: "Pool funds for yield farming",
-    icon: "🏦",
+    icon: "ðŸ¦",
     examples: ["Aerodrome USDC Pool", "Uniswap V3 ETH", "Aave USDC Lending"]
   },
   nft_mint: {
     name: "NFT Mint Quest", 
     description: "Group NFT minting",
-    icon: "🎨",
+    icon: "ðŸŽ¨",
     examples: ["Base NFT Drops", "Friend.tech Keys", "Basenames Registration"]
   },
   airdrop: {
     name: "Airdrop Quest",
     description: "Group airdrop participation",
-    icon: "🎁",
+    icon: "ðŸŽ",
     examples: ["Base Ecosystem Airdrops", "DeFi Protocol Airdrops"]
   },
   swap: {
     name: "Swap Quest",
     description: "Group token swaps",
-    icon: "🔄",
+    icon: "ðŸ”„",
     examples: ["ETH to USDC", "Token Arbitrage", "Cross-chain Swaps"]
   }
 };
@@ -659,13 +659,13 @@ async function executeTokenSwap(wallet, quest) {
 async function sendMainQuestActions(ctx) {
   const actionsContent = {
     id: `quest_main_${Date.now()}`,
-    description: "🎯 Welcome to Dragman Quest Vault! Choose your adventure:",
+    description: "ðŸŽ¯ Welcome to Dragman Quest Vault! Choose your adventure:",
     actions: [
-      { id: "create_quest", label: "🚀 Create Quest", style: "primary" },
-      { id: "list_quests", label: "📋 Active Quests", style: "primary" },
-      { id: "my_quests", label: "👤 My Quests", style: "secondary" },
-      { id: "leaderboard", label: "🏆 Leaderboard", style: "secondary" },
-      { id: "quest_help", label: "❓ Quest Help", style: "secondary" }
+      { id: "create_quest", label: "ðŸš€ Create Quest", style: "primary" },
+      { id: "list_quests", label: "ðŸ“‹ Active Quests", style: "primary" },
+      { id: "my_quests", label: "ðŸ‘¤ My Quests", style: "secondary" },
+      { id: "leaderboard", label: "ðŸ† Leaderboard", style: "secondary" },
+      { id: "quest_help", label: "â“ Quest Help", style: "secondary" }
     ],
     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   };
@@ -679,16 +679,16 @@ async function sendMainQuestActions(ctx) {
     });
     
     await ctx.conversation.send(actionsContent, ContentTypeActions);
-    log('info', '✅ Main Quest Actions sent successfully!');
+    log('info', 'âœ… Main Quest Actions sent successfully!');
   } catch (error) {
     log('error', 'Quick Actions failed', { error: error.message });
     // Fallback to text menu
     const fallback = `${actionsContent.description}\n\n` +
-      `1️⃣ 🚀 Create Quest\n` +
-      `2️⃣ 📋 Active Quests\n` +
-      `3️⃣ 👤 My Quests\n` +
-      `4️⃣ 🏆 Leaderboard\n` +
-      `5️⃣ ❓ Quest Help\n\n` +
+      `1ï¸âƒ£ ðŸš€ Create Quest\n` +
+      `2ï¸âƒ£ ðŸ“‹ Active Quests\n` +
+      `3ï¸âƒ£ ðŸ‘¤ My Quests\n` +
+      `4ï¸âƒ£ ðŸ† Leaderboard\n` +
+      `5ï¸âƒ£ â“ Quest Help\n\n` +
       `Reply with the number to select`;
     await ctx.sendText(fallback);
   }
@@ -697,26 +697,31 @@ async function sendMainQuestActions(ctx) {
 async function sendQuestTypeActions(ctx) {
   const actionsContent = {
     id: `quest_types_${Date.now()}`,
-    description: "🎯 Choose Quest Type:",
+    description: "ðŸŽ¯ Choose Quest Type:",
     actions: [
-      { id: "type_defi", label: "🏦 DeFi Stake", style: "primary" },
-      { id: "type_nft", label: "🎨 NFT Mint", style: "primary" },
-      { id: "type_airdrop", label: "🎁 Airdrop", style: "primary" },
-      { id: "type_swap", label: "🔄 Token Swap", style: "primary" }
+      { id: "type_defi", label: "ðŸ¦ DeFi Stake", style: "primary" },
+      { id: "type_nft", label: "ðŸŽ¨ NFT Mint", style: "primary" },
+      { id: "type_airdrop", label: "ðŸŽ Airdrop", style: "primary" },
+      { id: "type_swap", label: "ðŸ”„ Token Swap", style: "primary" }
     ],
     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   };
 
   try {
+    log('info', 'Sending Quest Type Actions', { 
+      contentType: ContentTypeActions, 
+      actionsCount: actionsContent.actions.length 
+    });
     await ctx.conversation.send(actionsContent, ContentTypeActions);
+    log('info', 'âœ… Quest Type Actions sent successfully!');
   } catch (error) {
     log('error', 'Quest Type Actions failed', { error: error.message });
     // Fallback to text menu
     const fallback = `${actionsContent.description}\n\n` +
-      `1️⃣ 🏦 DeFi Stake\n` +
-      `2️⃣ 🎨 NFT Mint\n` +
-      `3️⃣ 🎁 Airdrop\n` +
-      `4️⃣ 🔄 Token Swap\n\n` +
+      `1ï¸âƒ£ ðŸ¦ DeFi Stake\n` +
+      `2ï¸âƒ£ ðŸŽ¨ NFT Mint\n` +
+      `3ï¸âƒ£ ðŸŽ Airdrop\n` +
+      `4ï¸âƒ£ ðŸ”„ Token Swap\n\n` +
       `Reply with the number to select`;
     await ctx.sendText(fallback);
   }
@@ -728,35 +733,42 @@ async function sendQuestJoinActions(ctx, questId) {
 
   const isCreator = quest.creator === ctx.message.senderAddress;
   const actions = [
-    { id: `join_${questId}_50`, label: "💰 Join $50", style: "primary" },
-    { id: `join_${questId}_100`, label: "💰 Join $100", style: "primary" },
-    { id: `join_${questId}_200`, label: "💰 Join $200", style: "primary" },
-    { id: `join_${questId}_custom`, label: "💰 Custom Amount", style: "secondary" }
+    { id: `join_${questId}_50`, label: "ðŸ’° Join $50", style: "primary" },
+    { id: `join_${questId}_100`, label: "ðŸ’° Join $100", style: "primary" },
+    { id: `join_${questId}_200`, label: "ðŸ’° Join $200", style: "primary" },
+    { id: `join_${questId}_custom`, label: "ðŸ’° Custom Amount", style: "secondary" }
   ];
 
   // Add creator actions
   if (isCreator && quest.status === 'active') {
-    actions.push({ id: `execute_${questId}`, label: "🚀 Execute Quest", style: "primary" });
-    actions.push({ id: `cancel_${questId}`, label: "❌ Cancel Quest", style: "danger" });
+    actions.push({ id: `execute_${questId}`, label: "ðŸš€ Execute Quest", style: "primary" });
+    actions.push({ id: `cancel_${questId}`, label: "âŒ Cancel Quest", style: "danger" });
   }
 
   const actionsContent = {
     id: `quest_join_${questId}_${Date.now()}`,
-    description: `🎯 Join Quest: ${quest.title}\n💰 Target: $${quest.targetAmount} | 👥 Participants: ${quest.participants.length}${isCreator ? '\n👑 You are the creator' : ''}`,
+    description: `ðŸŽ¯ Join Quest: ${quest.title}\nðŸ’° Target: $${quest.targetAmount} | ðŸ‘¥ Participants: ${quest.participants.length}${isCreator ? '\nðŸ‘‘ You are the creator' : ''}`,
     actions,
     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   };
 
   try {
+    log('info', 'Sending Quest Join Actions', { 
+      contentType: ContentTypeActions, 
+      questId,
+      actionsCount: actions.length,
+      isCreator 
+    });
     await ctx.conversation.send(actionsContent, ContentTypeActions);
+    log('info', 'âœ… Quest Join Actions sent successfully!');
   } catch (error) {
     log('error', 'Quest Join Actions failed', { error: error.message });
     // Fallback to text menu
     const fallback = `${actionsContent.description}\n\n` +
-      `1️⃣ 💰 Join $50\n` +
-      `2️⃣ 💰 Join $100\n` +
-      `3️⃣ 💰 Join $200\n` +
-      `4️⃣ 💰 Custom Amount${isCreator ? '\n5️⃣ 🚀 Execute Quest\n6️⃣ ❌ Cancel Quest' : ''}\n\n` +
+      `1ï¸âƒ£ ðŸ’° Join $50\n` +
+      `2ï¸âƒ£ ðŸ’° Join $100\n` +
+      `3ï¸âƒ£ ðŸ’° Join $200\n` +
+      `4ï¸âƒ£ ðŸ’° Custom Amount${isCreator ? '\n5ï¸âƒ£ ðŸš€ Execute Quest\n6ï¸âƒ£ âŒ Cancel Quest' : ''}\n\n` +
       `Reply with the number to join`;
     await ctx.sendText(fallback);
   }
@@ -769,29 +781,29 @@ function formatQuestCard(quest) {
   const progress = (quest.currentAmount / quest.targetAmount) * 100;
   
   // Dynamic emojis based on progress
-  let progressEmoji = '🟢'; // Default
-  if (progress >= 100) progressEmoji = '🔥';
-  else if (progress >= 80) progressEmoji = '⚡';
-  else if (progress >= 60) progressEmoji = '🚀';
-  else if (progress >= 40) progressEmoji = '📈';
-  else if (progress >= 20) progressEmoji = '💪';
-  else progressEmoji = '🌱';
+  let progressEmoji = 'ðŸŸ¢'; // Default
+  if (progress >= 100) progressEmoji = 'ðŸ”¥';
+  else if (progress >= 80) progressEmoji = 'âš¡';
+  else if (progress >= 60) progressEmoji = 'ðŸš€';
+  else if (progress >= 40) progressEmoji = 'ðŸ“ˆ';
+  else if (progress >= 20) progressEmoji = 'ðŸ’ª';
+  else progressEmoji = 'ðŸŒ±';
   
   // Status emojis
-  let statusEmoji = '🟢 Active';
-  if (quest.status === 'completed') statusEmoji = '✅ Completed';
-  else if (quest.status === 'failed') statusEmoji = '❌ Failed';
-  else if (quest.status === 'cancelled') statusEmoji = '🚫 Cancelled';
+  let statusEmoji = 'ðŸŸ¢ Active';
+  if (quest.status === 'completed') statusEmoji = 'âœ… Completed';
+  else if (quest.status === 'failed') statusEmoji = 'âŒ Failed';
+  else if (quest.status === 'cancelled') statusEmoji = 'ðŸš« Cancelled';
   
-  return `🎯 **${quest.title}**
+  return `ðŸŽ¯ **${quest.title}**
 ${typeInfo.icon} **${typeInfo.name}**
 
-📝 ${quest.description}
-💰 Target: $${quest.targetAmount} | Current: $${quest.currentAmount} (${progress.toFixed(1)}%) ${progressEmoji}
-👥 Participants: ${quest.participants.length}/${quest.requirements.maxParticipants || '∞'}
-⏰ Deadline: ${new Date(quest.deadline).toLocaleDateString()}
-🎁 Rewards: ${quest.rewards.apy ? `${quest.rewards.apy}% APY` : 'TBD'}
-💼 Agent Fee: ${QUEST_FEE_PERCENTAGE * 100}% (transparent)
+ðŸ“ ${quest.description}
+ðŸ’° Target: $${quest.targetAmount} | Current: $${quest.currentAmount} (${progress.toFixed(1)}%) ${progressEmoji}
+ðŸ‘¥ Participants: ${quest.participants.length}/${quest.requirements.maxParticipants || 'âˆž'}
+â° Deadline: ${new Date(quest.deadline).toLocaleDateString()}
+ðŸŽ Rewards: ${quest.rewards.apy ? `${quest.rewards.apy}% APY` : 'TBD'}
+ðŸ’¼ Agent Fee: ${QUEST_FEE_PERCENTAGE * 100}% (transparent)
 
 **Quest ID:** \`${quest.id}\`
 **Status:** ${statusEmoji}`;
@@ -799,40 +811,40 @@ ${typeInfo.icon} **${typeInfo.name}**
 
 function formatQuestList(quests) {
   if (quests.length === 0) {
-    return "📋 No active quests found. Create one to get started!";
+    return "ðŸ“‹ No active quests found. Create one to get started!";
   }
   
-  let response = "📋 **Active Quests:**\n\n";
+  let response = "ðŸ“‹ **Active Quests:**\n\n";
   
   quests.forEach((quest, index) => {
     const typeInfo = QUEST_TYPES[quest.type];
     const progress = (quest.currentAmount / quest.targetAmount) * 100;
     
     response += `${index + 1}. ${typeInfo.icon} **${quest.title}**\n`;
-    response += `   💰 $${quest.currentAmount}/${quest.targetAmount} (${progress.toFixed(1)}%)\n`;
-    response += `   👥 ${quest.participants.length} participants\n`;
-    response += `   🆔 \`${quest.id}\`\n\n`;
+    response += `   ðŸ’° $${quest.currentAmount}/${quest.targetAmount} (${progress.toFixed(1)}%)\n`;
+    response += `   ðŸ‘¥ ${quest.participants.length} participants\n`;
+    response += `   ðŸ†” \`${quest.id}\`\n\n`;
   });
   
-  response += "💡 Use quest ID to join: \"join quest [ID]\"";
+  response += "ðŸ’¡ Use quest ID to join: \"join quest [ID]\"";
   
   return response;
 }
 
 function formatLeaderboard() {
   if (leaderboard.length === 0) {
-    return "🏆 No questers yet! Join some quests to climb the leaderboard!";
+    return "ðŸ† No questers yet! Join some quests to climb the leaderboard!";
   }
   
-  let response = "🏆 **Quest Leaderboard:**\n\n";
+  let response = "ðŸ† **Quest Leaderboard:**\n\n";
   
   leaderboard.slice(0, 10).forEach((user, index) => {
     const rank = index + 1;
-    const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
+    const medal = rank === 1 ? "ðŸ¥‡" : rank === 2 ? "ðŸ¥ˆ" : rank === 3 ? "ðŸ¥‰" : `${rank}.`;
     
     response += `${medal} **${user.username || user.address.slice(0, 8)}...**\n`;
-    response += `   🎯 Quests: ${user.totalQuests} | ✅ Success: ${user.successfulQuests}\n`;
-    response += `   💰 Profit: $${user.totalProfit.toFixed(2)} | 🏅 Points: ${user.points}\n\n`;
+    response += `   ðŸŽ¯ Quests: ${user.totalQuests} | âœ… Success: ${user.successfulQuests}\n`;
+    response += `   ðŸ’° Profit: $${user.totalProfit.toFixed(2)} | ðŸ… Points: ${user.points}\n\n`;
   });
   
   return response;
@@ -891,7 +903,7 @@ agent.on('text', async (ctx) => {
     });
 
     // React to show we received the message
-    await ctx.sendReaction('👀');
+    await ctx.sendReaction('ðŸ‘€');
 
     // Handle group chat messages - only respond if mentioned or replied to
     if (isGroupChat && !isMentioned && !isReplyToAgent) {
@@ -915,11 +927,11 @@ agent.on('text', async (ctx) => {
         if (message.includes('hello') || message.includes('hi') || message.includes('hey') || 
             message.includes('help') || message.includes('start') || message.includes('menu') ||
             message.includes('quest vault') || message.includes('dragman')) {
-          await ctx.sendText('🎯 Welcome to Dragman Quest Vault! I help groups create crypto quests together!');
+          await ctx.sendText('ðŸŽ¯ Welcome to Dragman Quest Vault! I help groups create crypto quests together!');
           await sendMainQuestActions(ctx);
         } else {
           // For other messages, just give a brief response
-          await ctx.sendText('🎯 Dragman Quest Vault - Type "help" or "menu" to see quest options!');
+          await ctx.sendText('ðŸŽ¯ Dragman Quest Vault - Type "help" or "menu" to see quest options!');
         }
       }
     }
@@ -927,7 +939,7 @@ agent.on('text', async (ctx) => {
   } catch (error) {
     log('error', 'Error handling message', { error: error.message });
     try {
-      await ctx.sendText('❌ Sorry, I encountered an error. Please try again.');
+      await ctx.sendText('âŒ Sorry, I encountered an error. Please try again.');
     } catch (sendError) {
       log('error', 'Failed to send error message', { error: sendError.message });
     }
@@ -943,13 +955,13 @@ agent.on('coinbase.com/intent:1.0', async (ctx) => {
     log('info', 'Intent received', { id, actionId, metadata });
     
     // React to show we received the intent
-    await ctx.sendReaction('⌛');
+    await ctx.sendReaction('âŒ›');
     
     // Handle different actions based on actionId
     switch (actionId) {
       // Main quest actions
       case 'create_quest':
-        await ctx.sendText('🚀 Let\'s create a quest! Choose the type:');
+        await ctx.sendText('ðŸš€ Let\'s create a quest! Choose the type:');
         await sendQuestTypeActions(ctx);
         break;
       case 'list_quests':
@@ -967,46 +979,46 @@ agent.on('coinbase.com/intent:1.0', async (ctx) => {
         await ctx.sendText(formatLeaderboard());
         break;
       case 'quest_help':
-        await ctx.sendText(`🎯 **Quest Vault Help**
+        await ctx.sendText(`ðŸŽ¯ **Quest Vault Help**
 
 **Creating Quests:**
-• Choose quest type (DeFi, NFT, Airdrop, Swap)
-• Set target amount and requirements
-• Share with your group
+â€¢ Choose quest type (DeFi, NFT, Airdrop, Swap)
+â€¢ Set target amount and requirements
+â€¢ Share with your group
 
 **Joining Quests:**
-• Click buttons to join
-• Choose contribution amount
-• Wait for quest execution
+â€¢ Click buttons to join
+â€¢ Choose contribution amount
+â€¢ Wait for quest execution
 
 **Quest Types:**
-🏦 **DeFi Stake** - Pool funds for yield farming
-🎨 **NFT Mint** - Group NFT minting
-🎁 **Airdrop** - Group airdrop participation
-🔄 **Token Swap** - Group token swaps
+ðŸ¦ **DeFi Stake** - Pool funds for yield farming
+ðŸŽ¨ **NFT Mint** - Group NFT minting
+ðŸŽ **Airdrop** - Group airdrop participation
+ðŸ”„ **Token Swap** - Group token swaps
 
 **Commands:**
-• "create quest" - Start quest creation
-• "list quests" - Show active quests
-• "join quest [ID]" - Join specific quest
-• "my quests" - Show your quests
-• "leaderboard" - Show top questers
+â€¢ "create quest" - Start quest creation
+â€¢ "list quests" - Show active quests
+â€¢ "join quest [ID]" - Join specific quest
+â€¢ "my quests" - Show your quests
+â€¢ "leaderboard" - Show top questers
 
-💡 **Pro Tip:** Quest Vault works best in group chats!`);
+ðŸ’¡ **Pro Tip:** Quest Vault works best in group chats!`);
         break;
       
       // Quest type actions
       case 'type_defi':
-        await ctx.sendText('🏦 **DeFi Stake Quest Creation**\n\nLet\'s create a DeFi yield farming quest!\n\n**Example:** "Create DeFi quest: Aerodrome USDC Pool, target $1000, min 5 participants, max $200 each"');
+        await ctx.sendText('ðŸ¦ **DeFi Stake Quest Creation**\n\nLet\'s create a DeFi yield farming quest!\n\n**Example:** "Create DeFi quest: Aerodrome USDC Pool, target $1000, min 5 participants, max $200 each"');
         break;
       case 'type_nft':
-        await ctx.sendText('🎨 **NFT Mint Quest Creation**\n\nLet\'s create an NFT minting quest!\n\n**Example:** "Create NFT quest: Friend.tech Keys, target $500, min 3 participants, max $100 each"');
+        await ctx.sendText('ðŸŽ¨ **NFT Mint Quest Creation**\n\nLet\'s create an NFT minting quest!\n\n**Example:** "Create NFT quest: Friend.tech Keys, target $500, min 3 participants, max $100 each"');
         break;
       case 'type_airdrop':
-        await ctx.sendText('🎁 **Airdrop Quest Creation**\n\nLet\'s create an airdrop participation quest!\n\n**Example:** "Create airdrop quest: Base Ecosystem, target $200, min 4 participants, max $50 each"');
+        await ctx.sendText('ðŸŽ **Airdrop Quest Creation**\n\nLet\'s create an airdrop participation quest!\n\n**Example:** "Create airdrop quest: Base Ecosystem, target $200, min 4 participants, max $50 each"');
         break;
       case 'type_swap':
-        await ctx.sendText('🔄 **Token Swap Quest Creation**\n\nLet\'s create a token swap quest!\n\n**Example:** "Create swap quest: ETH to USDC, target $800, min 4 participants, max $200 each"');
+        await ctx.sendText('ðŸ”„ **Token Swap Quest Creation**\n\nLet\'s create a token swap quest!\n\n**Example:** "Create swap quest: ETH to USDC, target $800, min 4 participants, max $200 each"');
         break;
       
       // Quest join actions
@@ -1017,15 +1029,15 @@ agent.on('coinbase.com/intent:1.0', async (ctx) => {
           const amount = parts[2];
           
           if (amount === 'custom') {
-            await ctx.sendText(`💰 **Custom Contribution**\n\nReply with your desired amount for quest \`${questId}\`\n\n**Example:** "Join quest ${questId} with $150"`);
+            await ctx.sendText(`ðŸ’° **Custom Contribution**\n\nReply with your desired amount for quest \`${questId}\`\n\n**Example:** "Join quest ${questId} with $150"`);
           } else {
             const contribution = parseInt(amount);
             const result = await joinQuest(ctx, questId, contribution);
             
             if (result.success) {
-              await ctx.sendText(`✅ **Joined Quest Successfully!**\n\n${formatQuestCard(result.quest)}\n\n🎉 You're now part of this quest!`);
+              await ctx.sendText(`âœ… **Joined Quest Successfully!**\n\n${formatQuestCard(result.quest)}\n\nðŸŽ‰ You're now part of this quest!`);
             } else {
-              await ctx.sendText(`❌ **Failed to Join Quest**\n\n${result.message}`);
+              await ctx.sendText(`âŒ **Failed to Join Quest**\n\n${result.message}`);
             }
           }
         } else if (actionId.startsWith('execute_')) {
@@ -1033,9 +1045,9 @@ agent.on('coinbase.com/intent:1.0', async (ctx) => {
           const result = await executeQuest(ctx, questId);
           
           if (result.success) {
-            await ctx.sendText(`🚀 **Quest Executed Successfully!**\n\n${formatQuestCard(result.quest)}\n\n💰 **Results:**\n• Total Profit: $${result.result.totalProfit.toFixed(2)}\n• Profit %: ${result.result.profitPercentage.toFixed(2)}%\n• Agent Fee: $${result.result.fees.profit.toFixed(2)} (${result.result.fees.percentage}%)\n• User Profit: $${(result.result.totalProfit - result.result.fees.profit).toFixed(2)}\n• TX: \`${result.result.executionTx}\`\n\n🎉 Quest completed! Rewards distributed to participants.`);
+            await ctx.sendText(`ðŸš€ **Quest Executed Successfully!**\n\n${formatQuestCard(result.quest)}\n\nðŸ’° **Results:**\nâ€¢ Total Profit: $${result.result.totalProfit.toFixed(2)}\nâ€¢ Profit %: ${result.result.profitPercentage.toFixed(2)}%\nâ€¢ Agent Fee: $${result.result.fees.profit.toFixed(2)} (${result.result.fees.percentage}%)\nâ€¢ User Profit: $${(result.result.totalProfit - result.result.fees.profit).toFixed(2)}\nâ€¢ TX: \`${result.result.executionTx}\`\n\nðŸŽ‰ Quest completed! Rewards distributed to participants.`);
           } else {
-            await ctx.sendText(`❌ **Failed to Execute Quest**\n\n${result.message}`);
+            await ctx.sendText(`âŒ **Failed to Execute Quest**\n\n${result.message}`);
           }
         } else if (actionId.startsWith('cancel_')) {
           const questId = actionId.split('_')[1];
@@ -1044,17 +1056,17 @@ agent.on('coinbase.com/intent:1.0', async (ctx) => {
           if (quest && quest.creator === ctx.message.senderAddress) {
             quest.status = 'cancelled';
             questStore.set(questId, quest);
-            await ctx.sendText(`❌ **Quest Cancelled**\n\nQuest \`${questId}\` has been cancelled by the creator.`);
+            await ctx.sendText(`âŒ **Quest Cancelled**\n\nQuest \`${questId}\` has been cancelled by the creator.`);
           } else {
-            await ctx.sendText(`❌ **Cannot Cancel Quest**\n\nOnly the quest creator can cancel this quest.`);
+            await ctx.sendText(`âŒ **Cannot Cancel Quest**\n\nOnly the quest creator can cancel this quest.`);
           }
         } else {
-          await ctx.sendText('❓ I\'m not sure what you selected. Please try again!');
+          await ctx.sendText('â“ I\'m not sure what you selected. Please try again!');
         }
     }
   } catch (error) {
     log('error', 'Error handling intent', { error: error.message });
-    await ctx.sendText('❌ Sorry, I had trouble processing your selection. Please try again.');
+    await ctx.sendText('âŒ Sorry, I had trouble processing your selection. Please try again.');
   }
 });
 
@@ -1065,7 +1077,7 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
   
   // 1. CREATE QUEST COMMANDS
   if (message.includes('create quest')) {
-    await ctx.sendText('🚀 **Quest Creation**\n\nChoose your quest type:');
+    await ctx.sendText('ðŸš€ **Quest Creation**\n\nChoose your quest type:');
     await sendQuestTypeActions(ctx);
     return null; // Let Quick Actions handle the response
   }
@@ -1075,7 +1087,7 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
     const questData = parseQuestCreation('create defi quest: DeFi Stake Quest, target $1000, min 3 participants, max $200 each');
     const quest = await createQuest(ctx, questData);
     if (quest) {
-      return `🎯 **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\n👥 **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
+      return `ðŸŽ¯ **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\nðŸ‘¥ **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
     }
   }
   
@@ -1083,7 +1095,7 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
     const questData = parseQuestCreation('create nft quest: NFT Mint Quest, target $500, min 3 participants, max $100 each');
     const quest = await createQuest(ctx, questData);
     if (quest) {
-      return `🎯 **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\n👥 **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
+      return `ðŸŽ¯ **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\nðŸ‘¥ **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
     }
   }
   
@@ -1091,7 +1103,7 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
     const questData = parseQuestCreation('create airdrop quest: Airdrop Quest, target $200, min 4 participants, max $50 each');
     const quest = await createQuest(ctx, questData);
     if (quest) {
-      return `🎯 **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\n👥 **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
+      return `ðŸŽ¯ **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\nðŸ‘¥ **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
     }
   }
   
@@ -1099,7 +1111,7 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
     const questData = parseQuestCreation('create swap quest: Token Swap Quest, target $800, min 4 participants, max $200 each');
     const quest = await createQuest(ctx, questData);
     if (quest) {
-      return `🎯 **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\n👥 **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
+      return `ðŸŽ¯ **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\nðŸ‘¥ **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
     }
   }
   
@@ -1125,38 +1137,38 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
   
   // 5. QUEST HELP COMMANDS
   if (message.includes('quest help') || message.includes('help')) {
-    return `🎯 **Quest Vault Help**
+    return `ðŸŽ¯ **Quest Vault Help**
 
 **Creating Quests:**
-• "create defi quest" - Create DeFi stake quest
-• "create nft quest" - Create NFT mint quest  
-• "create airdrop quest" - Create airdrop quest
-• "create swap quest" - Create token swap quest
+â€¢ "create defi quest" - Create DeFi stake quest
+â€¢ "create nft quest" - Create NFT mint quest  
+â€¢ "create airdrop quest" - Create airdrop quest
+â€¢ "create swap quest" - Create token swap quest
 
 **Managing Quests:**
-• "list quests" - Show active quests
-• "my quests" - Show your quests
-• "join quest [ID] $[amount]" - Join specific quest
-• "quest details [ID]" - Show quest information
-• "execute quest [ID]" - Execute quest (creator only)
+â€¢ "list quests" - Show active quests
+â€¢ "my quests" - Show your quests
+â€¢ "join quest [ID] $[amount]" - Join specific quest
+â€¢ "quest details [ID]" - Show quest information
+â€¢ "execute quest [ID]" - Execute quest (creator only)
 
 **Other Commands:**
-• "leaderboard" - Show top questers
-• "help" - Show this help message
+â€¢ "leaderboard" - Show top questers
+â€¢ "help" - Show this help message
 
 **Quest Types:**
-🏦 **DeFi Stake** - Pool funds for yield farming
-🎨 **NFT Mint** - Group NFT minting
-🎁 **Airdrop** - Group airdrop participation
-🔄 **Token Swap** - Group token swaps
+ðŸ¦ **DeFi Stake** - Pool funds for yield farming
+ðŸŽ¨ **NFT Mint** - Group NFT minting
+ðŸŽ **Airdrop** - Group airdrop participation
+ðŸ”„ **Token Swap** - Group token swaps
 
 **Examples:**
-• "create defi quest"
-• "join quest quest_1234567890 $100"
-• "list quests"
-• "my quests"
+â€¢ "create defi quest"
+â€¢ "join quest quest_1234567890 $100"
+â€¢ "list quests"
+â€¢ "my quests"
 
-💡 **Pro Tip:** Quest Vault works best in group chats!`;
+ðŸ’¡ **Pro Tip:** Quest Vault works best in group chats!`;
   }
   
   // 6. JOIN QUEST COMMANDS
@@ -1169,9 +1181,9 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
       const result = await joinQuest(ctx, questId, amount);
       
       if (result.success) {
-        return `✅ **Joined Quest Successfully!**\n\n${formatQuestCard(result.quest)}\n\n🎉 You're now part of this quest!`;
+        return `âœ… **Joined Quest Successfully!**\n\n${formatQuestCard(result.quest)}\n\nðŸŽ‰ You're now part of this quest!`;
       } else {
-        return `❌ **Failed to Join Quest**\n\n${result.message}`;
+        return `âŒ **Failed to Join Quest**\n\n${result.message}`;
       }
     }
     
@@ -1182,17 +1194,17 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
       const quest = questStore.get(questId);
       
       if (!quest) {
-        return `❌ Quest \`${questId}\` not found. Use "list quests" to see active quests.`;
+        return `âŒ Quest \`${questId}\` not found. Use "list quests" to see active quests.`;
       }
       
       if (quest.status !== 'active') {
-        return `❌ Quest \`${questId}\` is not active. Current status: ${quest.status}`;
+        return `âŒ Quest \`${questId}\` is not active. Current status: ${quest.status}`;
       }
       
       await sendQuestJoinActions(ctx, questId);
       return null; // Let Quick Actions handle the response
     } else {
-      return `❌ Please specify quest ID. Example: "join quest quest_1234567890 $100"`;
+      return `âŒ Please specify quest ID. Example: "join quest quest_1234567890 $100"`;
     }
   }
   
@@ -1204,7 +1216,7 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
       const quest = questStore.get(questId);
       
       if (!quest) {
-        return `❌ Quest \`${questId}\` not found.`;
+        return `âŒ Quest \`${questId}\` not found.`;
       }
       
       return formatQuestCard(quest);
@@ -1219,9 +1231,9 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
       const result = await executeQuest(ctx, questId);
       
       if (result.success) {
-        return `🚀 **Quest Executed Successfully!**\n\n${formatQuestCard(result.quest)}\n\n💰 **Results:**\n• Total Profit: $${result.result.totalProfit.toFixed(2)}\n• Profit %: ${result.result.profitPercentage.toFixed(2)}%\n• Agent Fee: $${result.result.fees.profit.toFixed(2)} (${result.result.fees.percentage}%)\n• User Profit: $${(result.result.totalProfit - result.result.fees.profit).toFixed(2)}\n• TX: \`${result.result.executionTx}\`\n\n🎉 Quest completed! Rewards distributed to participants.`;
+        return `ðŸš€ **Quest Executed Successfully!**\n\n${formatQuestCard(result.quest)}\n\nðŸ’° **Results:**\nâ€¢ Total Profit: $${result.result.totalProfit.toFixed(2)}\nâ€¢ Profit %: ${result.result.profitPercentage.toFixed(2)}%\nâ€¢ Agent Fee: $${result.result.fees.profit.toFixed(2)} (${result.result.fees.percentage}%)\nâ€¢ User Profit: $${(result.result.totalProfit - result.result.fees.profit).toFixed(2)}\nâ€¢ TX: \`${result.result.executionTx}\`\n\nðŸŽ‰ Quest completed! Rewards distributed to participants.`;
       } else {
-        return `❌ **Failed to Execute Quest**\n\n${result.message}`;
+        return `âŒ **Failed to Execute Quest**\n\n${result.message}`;
       }
     }
   }
@@ -1232,7 +1244,7 @@ async function handleQuestCommands(ctx, userMessage, senderAddress) {
     if (questData) {
       const quest = await createQuest(ctx, questData);
       if (quest) {
-        return `🎯 **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\n👥 **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
+        return `ðŸŽ¯ **Quest Created Successfully!**\n\n${formatQuestCard(quest)}\n\nðŸ‘¥ **Share this quest with your group!**\nUse: "join quest ${quest.id}"`;
       }
     }
   }
@@ -1311,10 +1323,10 @@ CORE FEATURES:
 - Leaderboard: Track top questers and their success
 
 QUEST TYPES:
-🏦 DeFi Stake - Pool funds for yield farming (Aerodrome, Uniswap, Aave)
-🎨 NFT Mint - Group NFT minting (Friend.tech keys, Basenames, Base NFTs)
-🎁 Airdrop - Group airdrop participation (Base ecosystem, DeFi protocols)
-🔄 Token Swap - Group token swaps (ETH/USDC, arbitrage opportunities)
+ðŸ¦ DeFi Stake - Pool funds for yield farming (Aerodrome, Uniswap, Aave)
+ðŸŽ¨ NFT Mint - Group NFT minting (Friend.tech keys, Basenames, Base NFTs)
+ðŸŽ Airdrop - Group airdrop participation (Base ecosystem, DeFi protocols)
+ðŸ”„ Token Swap - Group token swaps (ETH/USDC, arbitrage opportunities)
 
 HOW QUESTS WORK:
 1. Create quest with target amount and requirements
@@ -1339,7 +1351,7 @@ Always encourage group participation and highlight the unique collaborative natu
     return completion.choices[0].message.content;
   } catch (error) {
     log('error', 'OpenAI API error', { error: error.message });
-    return "🎯 I'm having trouble connecting right now. Try asking about quests!";
+    return "ðŸŽ¯ I'm having trouble connecting right now. Try asking about quests!";
   }
 }
 
@@ -1349,9 +1361,9 @@ Always encourage group participation and highlight the unique collaborative natu
 await agent.start();
 
 // Log when we're ready
-agent.on('start', () => {
-  log('info', `✅ Dragman Quest Vault Agent is online and ready!`);
-  log('info', `📬 Agent address: ${agent.address}`);
+agent.on('start', async () => {
+  log('info', `âœ… Dragman Quest Vault Agent is online and ready!`);
+  log('info', `ðŸ“¬ Agent address: ${agent.address}`);
   
   // Register codecs AFTER agent is fully started with retry logic
   let codecRegistered = false;
@@ -1360,7 +1372,7 @@ agent.on('start', () => {
       if (agent && agent.client && agent.client.codecRegistry) {
         agent.client.codecRegistry.register(new JsonCodec(ContentTypeActions));
         agent.client.codecRegistry.register(new JsonCodec(ContentTypeIntent));
-        log('info', `✅ Base App Quick Actions codecs registered successfully! (attempt ${attempt})`);
+        log('info', `âœ… Base App Quick Actions codecs registered successfully! (attempt ${attempt})`);
         codecRegistered = true;
         break;
       } else {
@@ -1374,13 +1386,13 @@ agent.on('start', () => {
   }
   
   if (!codecRegistered) {
-    log('error', '❌ CRITICAL: Codec registration failed - Quick Actions will show numbers instead of buttons!');
+    log('error', 'âŒ CRITICAL: Codec registration failed - Quick Actions will show numbers instead of buttons!');
   }
   
   // Log installation info
   try {
     if (agent?.installationId) {
-      log('info', `🔧 Installation ID: ${agent.installationId}`);
+      log('info', `ðŸ”§ Installation ID: ${agent.installationId}`);
     }
   } catch (e) {
     // ignore installation logging errors
@@ -1389,6 +1401,6 @@ agent.on('start', () => {
 
 // Keep the process running
 process.on('SIGINT', () => {
-  log('info', '🛑 Shutting down gracefully...');
+  log('info', 'ðŸ›‘ Shutting down gracefully...');
   process.exit(0);
 });
