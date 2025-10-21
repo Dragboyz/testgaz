@@ -10,11 +10,23 @@ import NodeCache from 'node-cache';
 // Load environment variables
 dotenv.config();
 
-// Ensure installation directory exists
+// Ensure installation directory exists and clean old installations
 const installationPath = process.env.XMTP_INSTALLATION_PATH || './.xmtp-installation';
 if (!fs.existsSync(installationPath)) {
   fs.mkdirSync(installationPath, { recursive: true });
   console.log(`📁 Created XMTP installation directory: ${installationPath}`);
+} else {
+  // Clean old installations to prevent "2 installations" warning
+  try {
+    const files = fs.readdirSync(installationPath);
+    const oldInstalls = files.filter(f => f.startsWith('installation-') && f !== 'installation-current');
+    oldInstalls.forEach(f => {
+      fs.rmSync(path.join(installationPath, f), { recursive: true, force: true });
+      console.log(`🗑️ Removed old installation: ${f}`);
+    });
+  } catch (e) {
+    console.log(`⚠️ Could not clean old installations: ${e.message}`);
+  }
 }
 
 // Initialize OpenAI
@@ -22,11 +34,13 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize XMTP Agent SDK
+// Initialize XMTP Agent SDK with SQLCipher encryption
 const agent = await Agent.createFromEnv({
   env: process.env.XMTP_ENV || 'production',
   persistConversations: true,
-  installationPath: installationPath
+  installationPath: installationPath,
+  // Add SQLCipher encryption key
+  dbEncryptionKey: process.env.XMTP_DB_ENCRYPTION_KEY || 'default-key-change-in-production'
 });
 
 // --- Base App Quick Actions Implementation ---
@@ -531,26 +545,46 @@ async function executeQuestOnChain(quest) {
   }
 }
 
-// Aerodrome USDC staking execution
+// Aerodrome USDC staking execution (Base mainnet)
 async function executeDeFiStake(wallet, quest) {
-  // Aerodrome USDC Pool contract (example)
-  const poolAddress = '0x...'; // Replace with actual Aerodrome USDC pool
+  // Aerodrome USDC Pool contract on Base mainnet
+  const poolAddress = '0x...'; // Replace with actual Aerodrome USDC pool address
   const poolABI = [
-    'function deposit(uint256 amount) external',
-    'function balanceOf(address) external view returns (uint256)'
+    'function deposit(uint256 amount) external returns (uint256)',
+    'function balanceOf(address) external view returns (uint256)',
+    'function totalSupply() external view returns (uint256)'
   ];
   
   const poolContract = new ethers.Contract(poolAddress, poolABI, wallet);
-  const amount = ethers.parseEther(quest.currentAmount.toString());
   
-  // Execute staking transaction
-  const tx = await poolContract.deposit(amount);
-  const receipt = await tx.wait();
+  // Convert USD amount to USDC (assuming 1:1 for simplicity)
+  const amount = ethers.parseUnits(quest.currentAmount.toString(), 6); // USDC has 6 decimals
   
-  // Calculate profit (simplified - in reality, you'd track rewards over time)
-  const profit = quest.currentAmount * 0.05; // 5% APY
+  log('info', 'Executing Aerodrome staking', { 
+    poolAddress, 
+    amount: quest.currentAmount,
+    wallet: wallet.address 
+  });
   
-  return { txHash: receipt.hash, profit };
+  try {
+    // Execute staking transaction
+    const tx = await poolContract.deposit(amount);
+    const receipt = await tx.wait();
+    
+    // Calculate profit (simplified - in reality, you'd track rewards over time)
+    const profit = quest.currentAmount * 0.05; // 5% APY
+    
+    log('info', 'Aerodrome staking successful', { 
+      txHash: receipt.hash, 
+      gasUsed: receipt.gasUsed.toString(),
+      profit 
+    });
+    
+    return { txHash: receipt.hash, profit };
+  } catch (error) {
+    log('error', 'Aerodrome staking failed', { error: error.message });
+    throw error;
+  }
 }
 
 // NFT minting execution
@@ -637,6 +671,13 @@ async function sendMainQuestActions(ctx) {
   };
 
   try {
+    // Log the content type and actions before sending
+    log('info', 'Sending Quick Actions', { 
+      contentType: ContentTypeActions,
+      actionsCount: actionsContent.actions.length,
+      description: actionsContent.description.substring(0, 50) + '...'
+    });
+    
     await ctx.conversation.send(actionsContent, ContentTypeActions);
     log('info', '✅ Main Quest Actions sent successfully!');
   } catch (error) {
@@ -685,15 +726,24 @@ async function sendQuestJoinActions(ctx, questId) {
   const quest = questStore.get(questId);
   if (!quest) return;
 
+  const isCreator = quest.creator === ctx.message.senderAddress;
+  const actions = [
+    { id: `join_${questId}_50`, label: "💰 Join $50", style: "primary" },
+    { id: `join_${questId}_100`, label: "💰 Join $100", style: "primary" },
+    { id: `join_${questId}_200`, label: "💰 Join $200", style: "primary" },
+    { id: `join_${questId}_custom`, label: "💰 Custom Amount", style: "secondary" }
+  ];
+
+  // Add creator actions
+  if (isCreator && quest.status === 'active') {
+    actions.push({ id: `execute_${questId}`, label: "🚀 Execute Quest", style: "primary" });
+    actions.push({ id: `cancel_${questId}`, label: "❌ Cancel Quest", style: "danger" });
+  }
+
   const actionsContent = {
     id: `quest_join_${questId}_${Date.now()}`,
-    description: `🎯 Join Quest: ${quest.title}\n💰 Target: $${quest.targetAmount} | 👥 Participants: ${quest.participants.length}`,
-    actions: [
-      { id: `join_${questId}_50`, label: "💰 Join $50", style: "primary" },
-      { id: `join_${questId}_100`, label: "💰 Join $100", style: "primary" },
-      { id: `join_${questId}_200`, label: "💰 Join $200", style: "primary" },
-      { id: `join_${questId}_custom`, label: "💰 Custom Amount", style: "secondary" }
-    ],
+    description: `🎯 Join Quest: ${quest.title}\n💰 Target: $${quest.targetAmount} | 👥 Participants: ${quest.participants.length}${isCreator ? '\n👑 You are the creator' : ''}`,
+    actions,
     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   };
 
@@ -706,7 +756,7 @@ async function sendQuestJoinActions(ctx, questId) {
       `1️⃣ 💰 Join $50\n` +
       `2️⃣ 💰 Join $100\n` +
       `3️⃣ 💰 Join $200\n` +
-      `4️⃣ 💰 Custom Amount\n\n` +
+      `4️⃣ 💰 Custom Amount${isCreator ? '\n5️⃣ 🚀 Execute Quest\n6️⃣ ❌ Cancel Quest' : ''}\n\n` +
       `Reply with the number to join`;
     await ctx.sendText(fallback);
   }
@@ -977,6 +1027,26 @@ agent.on('coinbase.com/intent:1.0', async (ctx) => {
             } else {
               await ctx.sendText(`❌ **Failed to Join Quest**\n\n${result.message}`);
             }
+          }
+        } else if (actionId.startsWith('execute_')) {
+          const questId = actionId.split('_')[1];
+          const result = await executeQuest(ctx, questId);
+          
+          if (result.success) {
+            await ctx.sendText(`🚀 **Quest Executed Successfully!**\n\n${formatQuestCard(result.quest)}\n\n💰 **Results:**\n• Total Profit: $${result.result.totalProfit.toFixed(2)}\n• Profit %: ${result.result.profitPercentage.toFixed(2)}%\n• Agent Fee: $${result.result.fees.profit.toFixed(2)} (${result.result.fees.percentage}%)\n• User Profit: $${(result.result.totalProfit - result.result.fees.profit).toFixed(2)}\n• TX: \`${result.result.executionTx}\`\n\n🎉 Quest completed! Rewards distributed to participants.`);
+          } else {
+            await ctx.sendText(`❌ **Failed to Execute Quest**\n\n${result.message}`);
+          }
+        } else if (actionId.startsWith('cancel_')) {
+          const questId = actionId.split('_')[1];
+          const quest = questStore.get(questId);
+          
+          if (quest && quest.creator === ctx.message.senderAddress) {
+            quest.status = 'cancelled';
+            questStore.set(questId, quest);
+            await ctx.sendText(`❌ **Quest Cancelled**\n\nQuest \`${questId}\` has been cancelled by the creator.`);
+          } else {
+            await ctx.sendText(`❌ **Cannot Cancel Quest**\n\nOnly the quest creator can cancel this quest.`);
           }
         } else {
           await ctx.sendText('❓ I\'m not sure what you selected. Please try again!');
@@ -1283,17 +1353,28 @@ agent.on('start', () => {
   log('info', `✅ Dragman Quest Vault Agent is online and ready!`);
   log('info', `📬 Agent address: ${agent.address}`);
   
-  // Register codecs AFTER agent is fully started
-  try {
-    if (agent && agent.client && agent.client.codecRegistry) {
-      agent.client.codecRegistry.register(new JsonCodec(ContentTypeActions));
-      agent.client.codecRegistry.register(new JsonCodec(ContentTypeIntent));
-      log('info', '✅ Base App Quick Actions codecs registered successfully!');
-    } else {
-      log('error', 'Codec registry not available after start - Quick Actions will fail');
+  // Register codecs AFTER agent is fully started with retry logic
+  let codecRegistered = false;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      if (agent && agent.client && agent.client.codecRegistry) {
+        agent.client.codecRegistry.register(new JsonCodec(ContentTypeActions));
+        agent.client.codecRegistry.register(new JsonCodec(ContentTypeIntent));
+        log('info', `✅ Base App Quick Actions codecs registered successfully! (attempt ${attempt})`);
+        codecRegistered = true;
+        break;
+      } else {
+        log('warn', `Codec registry not available (attempt ${attempt}/3)`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      }
+    } catch (e) {
+      log('error', `Failed to register codecs (attempt ${attempt}/3)`, { error: e?.message });
+      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 1000));
     }
-  } catch (e) {
-    log('error', 'Failed to register codecs', { error: e?.message });
+  }
+  
+  if (!codecRegistered) {
+    log('error', '❌ CRITICAL: Codec registration failed - Quick Actions will show numbers instead of buttons!');
   }
   
   // Log installation info
